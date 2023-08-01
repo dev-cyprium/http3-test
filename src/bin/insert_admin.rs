@@ -23,9 +23,6 @@ fn main() -> Result<(), PoolError> {
     env_logger::init();
 
     let args = std::env::args().collect::<Vec<_>>();
-    dbg!(args.len());
-    dbg!(&args);
-
     let user_email = args.get(1).expect("user email is required");
     let first_name = args.get(2).expect("first name is required");
     let last_name = args.get(3).expect("last name is required");

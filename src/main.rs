@@ -1,26 +1,42 @@
-use std::env;
-
+// use std::env;
 use dotenvy::dotenv;
-use salvo::prelude::*;
-use vox_box_backend::db;
+use salvo::{
+    conn::rustls::{Keycert, RustlsConfig},
+    prelude::*,
+};
+// use vox_box_backend::db;
 
 extern crate argon2;
 
-#[handler]
-async fn hello() -> &'static str {
-    "Hello World"
-}
+// #[handler]
+// async fn hello() -> &'static str {
+//     "Hello World"
+// }
 
 #[tokio::main]
 async fn main() {
     dotenv().expect(".env file not found!");
     tracing_subscriber::fmt().init();
 
-    let db_url: String = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+    let cert = include_bytes!("../certs/cert.pem").to_vec();
+    let key = include_bytes!("../certs/key.pem").to_vec();
+    let config = RustlsConfig::new(Keycert::new().cert(cert.as_slice()).key(key.as_slice()));
+    let listener = TcpListener::new(("127.0.0.1", 443)).rustls(config.clone());
 
-    db::init(&db_url);
+    // let db_url: String = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+    // db::init(&db_url);
 
-    let router = Router::new().get(hello);
-    let acceptor = TcpListener::new("127.0.0.1:5800").bind().await;
+    // let router = Router::new().get(hello);
+    let router = Router::with_path("<**path>").get(
+        StaticDir::new(["examples/static"])
+            .defaults("index.html")
+            .listing(true),
+    );
+
+    let acceptor = QuinnListener::new(config, ("127.0.0.1", 443))
+        .join(listener)
+        .bind()
+        .await;
+
     Server::new(acceptor).serve(router).await;
 }
