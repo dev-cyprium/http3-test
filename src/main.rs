@@ -19,7 +19,7 @@ async fn main() {
     tracing_subscriber::fmt().init();
 
     let cert = include_bytes!("../../fullchain.pem").to_vec();
-    let key = include_bytes!("../../certs/privkey.pem").to_vec();
+    let key = include_bytes!("../../privkey.pem").to_vec();
     let config = RustlsConfig::new(Keycert::new().cert(cert.as_slice()).key(key.as_slice()));
     let listener = TcpListener::new(("127.0.0.1", 443)).rustls(config.clone());
 
